@@ -1,5 +1,10 @@
 <template>
   <div class="task-actions">
+    <el-tooltip class="item hidden-md-and-up" effect="dark" :content="$t('task.new-task')" placement="bottom">
+      <i @click.stop="onAddClick">
+        <mo-icon name="menu-add" width="14" height="14" />
+      </i>
+    </el-tooltip>
     <el-tooltip class="item" effect="dark" :content="$t('task.refresh-list')" placement="bottom">
       <i @click="onRefreshClick">
         <mo-icon name="refresh" width="14" height="14" :spin="refreshing" />
@@ -37,6 +42,7 @@
 <script>
   import { mapState } from 'vuex'
   import TaskProgress from './TaskProgress'
+  import '@/components/Icons/menu-add'
   import '@/components/Icons/refresh'
   import '@/components/Icons/task-start-line'
   import '@/components/Icons/task-pause-line'
@@ -84,62 +90,44 @@
       onResumeAllClick: function () {
         this.$store.dispatch('task/resumeAllTask')
           .then(() => {
-            this.$message.success({
-              message: this.$t('task.resume-all-task-success'),
-              showClose: true
-            })
+            this.$msg.success(this.$t('task.resume-all-task-success'))
           })
           .catch(({ code }) => {
             if (code === 1) {
-              this.$message.error({
-                message: this.$t('task.resume-all-task-fail'),
-                showClose: true
-              })
+              this.$msg.error(this.$t('task.resume-all-task-fail'))
             }
           })
       },
       onPauseAllClick: function () {
         this.$store.dispatch('task/pauseAllTask')
           .then(() => {
-            this.$message.success({
-              message: this.$t('task.pause-all-task-success'),
-              showClose: true
-            })
+            this.$msg.success(this.$t('task.pause-all-task-success'))
           })
           .catch(({ code }) => {
             if (code === 1) {
-              this.$message.error({
-                message: this.$t('task.pause-all-task-fail'),
-                showClose: true
-              })
+              this.$msg.error(this.$t('task.pause-all-task-fail'))
             }
           })
       },
       onPurgeRecordClick: function () {
         this.$store.dispatch('task/purgeTaskRecord')
           .then(() => {
-            this.$message.success({
-              message: this.$t('task.purge-record-success'),
-              showClose: true
-            })
+            this.$msg.success(this.$t('task.purge-record-success'))
           })
           .catch(({ code }) => {
             if (code === 1) {
-              this.$message.error({
-                message: this.$t('task.purge-record-fail'),
-                showClose: true
-              })
+              this.$msg.error(this.$t('task.purge-record-fail'))
             }
           })
+      },
+      onAddClick: function () {
+        this.$store.dispatch('app/showAddTaskDialog', 'uri')
       }
     }
   }
 </script>
 
 <style lang="scss">
-  @import '../Theme/Variables';
-  @import '../Theme/Darkness/Variables';
-
   .task-actions {
     position: absolute;
     top: 44px;
@@ -150,7 +138,7 @@
     user-select: none;
     cursor: default;
     text-align: right;
-    color: #4D515A;
+    color: $--task-action-color;
     transition: all 0.25s;
     &> i {
       display: inline-block;
@@ -160,7 +148,7 @@
       cursor: pointer;
       outline: none;
       &:hover {
-        color: $--color-primary;
+        color: $--task-action-hover-color;
       }
     }
   }

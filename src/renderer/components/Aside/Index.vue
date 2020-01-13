@@ -1,20 +1,20 @@
 <template>
-  <el-aside width="78px" class="aside" :class="{ draggable: !isWindows() }">
+  <el-aside width="78px" :class="['aside', 'hidden-sm-and-down', { 'draggable': asideDraggable }]">
     <div class="aside-inner">
       <mo-logo-mini />
       <ul class="menu top-menu">
-        <li @click="nav('/task')">
+        <li @click="nav('/task')" class="non-draggable">
           <mo-icon name="menu-task" width="20" height="20" />
         </li>
-        <li @click="showAddTask()">
+        <li @click="showAddTask()" class="non-draggable">
           <mo-icon name="menu-add" width="20" height="20" />
         </li>
       </ul>
       <ul class="menu bottom-menu">
-        <li @click="nav('/preference')">
+        <li @click="nav('/preference')" class="non-draggable">
           <mo-icon name="menu-preference" width="20" height="20" />
         </li>
-        <li @click="showAboutPanel">
+        <li @click="showAboutPanel" class="non-draggable">
           <mo-icon name="menu-about" width="20" height="20" />
         </li>
       </ul>
@@ -39,19 +39,17 @@
     computed: {
       ...mapState('app', {
         currentPage: state => state.currentPage
-      })
+      }),
+      asideDraggable: function () {
+        return is.macOS()
+      }
     },
     methods: {
-      isRenderer: is.renderer,
-      isWindows: is.windows,
-      open (link) {
-        this.$electron.shell.openExternal(link)
-      },
       showAddTask (taskType = 'uri') {
         this.$store.dispatch('app/showAddTaskDialog', taskType)
       },
       showAboutPanel () {
-        // if (this.isRenderer()) {
+        // if (is.renderer()) {
         //   this.$electron.ipcRenderer.send('command', 'application:about')
         // } else {
         this.$store.dispatch('app/showAboutPanel')

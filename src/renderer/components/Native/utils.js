@@ -2,9 +2,11 @@ import is from 'electron-is'
 import { existsSync } from 'fs'
 import { Message } from 'element-ui'
 import {
+  isMagnetTask,
   getTaskFullPath,
   bytesToSize
 } from '@shared/utils'
+import { LIGHT_THEME, DARK_THEME } from '@shared/constants'
 
 const remote = is.renderer() ? require('electron').remote : {}
 
@@ -40,16 +42,33 @@ export function openItem (fullPath, { errorMsg }) {
   return result
 }
 
-export function moveTaskFilesToTrash (task, { pathErrorMsg, delFailMsg, delConfigFailMsg }) {
+export function moveTaskFilesToTrash (task, messages = {}) {
+  /**
+   * 磁力链接任务，有 bittorrent，但没有 bittorrent.info ，
+   * 在没下完变成BT任务之前 path 不是一个完整路径，
+   * 未避免误删所在目录，所以删除时直接返回 true
+   */
+  if (isMagnetTask(task)) {
+    return true
+  }
+
+  const { pathErrorMsg, delFailMsg, delConfigFailMsg } = messages
+  const { dir } = task
   const path = getTaskFullPath(task)
-  if (!path && pathErrorMsg) {
-    Message.error(pathErrorMsg)
+  if (!path || dir === path) {
+    if (pathErrorMsg) {
+      Message.error(pathErrorMsg)
+    }
     return false
   }
 
-  const deleteResult1 = remote.shell.moveItemToTrash(path)
-  if (!deleteResult1 && delFailMsg) {
-    Message.error(delFailMsg)
+  let deleteResult1 = true
+  const isFileExist = existsSync(path)
+  if (isFileExist) {
+    deleteResult1 = remote.shell.moveItemToTrash(path)
+    if (!deleteResult1 && delFailMsg) {
+      Message.error(delFailMsg)
+    }
   }
 
   let deleteResult2 = true
@@ -66,30 +85,54 @@ export function moveTaskFilesToTrash (task, { pathErrorMsg, delFailMsg, delConfi
 }
 
 export function openDownloadDock (path) {
+  if (!is.macOS()) {
+    return
+  }
   remote.app.dock.downloadFinished(path)
 }
 
 export function updateDockBadge (text) {
+  if (!is.macOS()) {
+    return
+  }
   remote.app.dock.setBadge(text)
 }
 
 export function showDownloadSpeedInDock (downloadSpeed) {
-  if (is.windows()) {
+  if (!is.macOS()) {
     return
   }
-  const text = downloadSpeed > 0 ? bytesToSize(downloadSpeed) : ''
+  const text = downloadSpeed > 0 ? `${bytesToSize(downloadSpeed)}/s` : ''
   updateDockBadge(text)
 }
 
 export function addToRecentTask (task) {
+  if (is.linux()) {
+    return
+  }
   const path = getTaskFullPath(task)
   remote.app.addRecentDocument(path)
 }
 
 export function addToRecentTaskByPath (path) {
+  if (is.linux()) {
+    return
+  }
   remote.app.addRecentDocument(path)
 }
 
 export function clearRecentTasks () {
+  if (is.linux()) {
+    return
+  }
   remote.app.clearRecentDocuments()
+}
+
+export function getSystemTheme () {
+  let result = LIGHT_THEME
+  if (!is.macOS()) {
+    return result
+  }
+  result = remote.systemPreferences.isDarkMode() ? DARK_THEME : LIGHT_THEME
+  return result
 }
